@@ -4,16 +4,13 @@ import pandas as pd
 import re
 import datetime
 
-# x = list(np.linspace(-10, 20, 50))
-# print(Interpolator.interpolate(x, np.sin(x), -10))
-
 
 class DiscountingCurveUSD:
     """...
     """
 
     @staticmethod
-    def get_discount_curve_usd(initial_date: datetime.datetime, required_end_dates: list):
+    def get_discount_curve_usd(initial_date: datetime.datetime, required_end_dates: list, verbose=False):
 
         def get_sorted_data():
             data = pd.read_csv("../data/USD rates.csv")
@@ -48,9 +45,9 @@ class DiscountingCurveUSD:
             mix_sorted = sorted(zip(ir_days_to_start, ir_length, ir_rates))
             return mix_sorted
 
-
         usd_zero_rates_days = []
-        usd_zero_rates_values = []  # TODO: add compounding?
+        usd_zero_rates_values = []
+        # TODO: add compounding?
 
         def add_new_rate_to_(days_to_start, length, internal_rate):
             if days_to_start == 0:
@@ -58,13 +55,13 @@ class DiscountingCurveUSD:
                 usd_zero_rates_values.append(internal_rate)
                 return
 
+            # TODO: add extrapolation (non-flat?)
             rate1 = Interpolator.interpolate(usd_zero_rates_days, usd_zero_rates_values, days_to_start)
             rate2 = internal_rate
             total_rate = ((1 + rate1 * days_to_start / 360) * (1 + rate2 * length / 360) - 1) / \
-                         ((days_to_start + length) / 360)
+                         ((days_to_start + length) / 360)  # TODO: what DCF convention?
             usd_zero_rates_days.append(days_to_start + length)
             usd_zero_rates_values.append(total_rate)
-
 
         mix_sorted = get_sorted_data()
 
@@ -79,13 +76,20 @@ class DiscountingCurveUSD:
             days = (end_date - initial_date).days
             interpolated_rate = Interpolator.interpolate(usd_zero_rates_days, usd_zero_rates_values, days)
             df = get_discount_factor(days, interpolated_rate)
-            print(days, df)
+            if verbose:
+                print("Interpolated rate for {:} days: {:.4f}%".format(days, interpolated_rate * 100))
             discount_curve_usd.append(df)
 
         return list(zip(required_end_dates, discount_curve_usd))
 
 
 if __name__ == "__main__":
-    x = list(np.arange(datetime.datetime(2021, 10, 28), datetime.datetime(2026, 10, 28),
-                       datetime.timedelta(60)).astype(datetime.datetime))
-    print(DiscountingCurveUSD.get_discount_curve_usd(datetime.datetime(2021, 10, 28), x))
+    import matplotlib.pyplot as plt
+
+    dates = list(np.arange(datetime.datetime(2021, 10, 28), datetime.datetime(2026, 10, 28),
+                           datetime.timedelta(60)).astype(datetime.datetime))
+    dates, usd_dfs = list(zip(*DiscountingCurveUSD.get_discount_curve_usd(datetime.datetime(2021, 10, 28), dates,
+                                                                          verbose=True)))
+    plt.plot(dates, usd_dfs)
+    plt.xticks(dates[::5])
+    plt.show()
