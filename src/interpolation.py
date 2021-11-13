@@ -2,12 +2,12 @@ import numpy as np
 
 
 class Interpolator:
-    """Linear interpolator.
+    """Linear interpolator and extrapolator
     """
 
     @staticmethod
     def interpolate(x_list: list, y_list: list, z: float):
-        """Linear interpolate.
+        """Linear interpolation, flat extrapolation
         Parameters
         __________
         x_list : list
