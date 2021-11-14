@@ -30,3 +30,4 @@ class Interpolator:
                 answer = y_list[index - 1] + (y_list[index] - y_list[index - 1]) * delta
                 break
         return answer
+
