@@ -1,10 +1,13 @@
+import numpy as np
+
+
 class Interpolator:
-    """Linear interpolator.
+    """Linear interpolator and extrapolator
     """
 
     @staticmethod
     def interpolate(x_list: list, y_list: list, z: float):
-        """Linear interpolate.
+        """Linear interpolation, flat extrapolation
         Parameters
         __________
         x_list : list
@@ -24,9 +27,4 @@ class Interpolator:
         """
         if x_list != sorted(x_list):
             raise ValueError('x_list must be sorted ASC')
-        for index, element in enumerate(x_list):
-            if z <= element:
-                delta = (z - x_list[index - 1]) / (x_list[index] - x_list[index - 1])
-                answer = y_list[index - 1] + (y_list[index] - y_list[index - 1]) * delta
-                break
-        return answer
+        return np.interp(z, x_list, y_list)
